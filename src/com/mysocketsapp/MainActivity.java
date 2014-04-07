@@ -1,9 +1,15 @@
 package com.mysocketsapp;
 
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.net.InetAddress;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
+
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Activity;
 import android.view.Menu;
@@ -14,7 +20,10 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 public class MainActivity extends Activity {
+	
 	Socket cliente;
+	int state =  0;
+	ObjectOutputStream salida;
 	//final TextView mensaje = (TextView) findViewById(R.id.messageText);
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -22,13 +31,6 @@ public class MainActivity extends Activity {
 		
 		setContentView(R.layout.activity_main);
 		final TextView mensaje = (TextView) findViewById(R.id.messageText);
-		if(Connect()){
-			mensaje.setText("si conecta");
-			System.out.print("conecto");
-		}else{
-			mensaje.setText("no conecta");
-			System.out.print("No conecto");
-		}
 		Button sendText;
 		sendText = (Button) findViewById(R.id.btnSend);
 		final ListView listview = (ListView) findViewById(R.id.messageList);
@@ -44,11 +46,23 @@ public class MainActivity extends Activity {
         sendText.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				list.add(mensaje.getText().toString());
-			    adapter.notifyDataSetChanged();
-			    listview.setSelection(listview.getAdapter().getCount()-1);
-				System.out.println("Hola mundo desde console by "+mensaje.getText());
-				mensaje.setText("");
+				if(state==0){
+					new MakeConnectionTask().execute();
+					state++;
+				}else{
+					list.add(mensaje.getText().toString());
+				    adapter.notifyDataSetChanged();
+				    listview.setSelection(listview.getAdapter().getCount()-1);
+					System.out.println("Hola mundo desde console by "+mensaje.getText());
+					try {
+						salida.writeObject(mensaje.getText().toString());
+						System.out.println("si mando mensaje");
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					mensaje.setText("");
+				}
 			}
 		});
         listview.setSelection(listview.getAdapter().getCount()-1);
@@ -62,21 +76,43 @@ public class MainActivity extends Activity {
 	    	}); */
 	}
 	public boolean Connect() {
+
 		String IP ="192.168.1.73";
 		int PORT = 3500;
 		try {
 			cliente = new Socket(IP, PORT);
 			return cliente.isConnected();
-		} catch (Exception e) {
-			System.out.println("nooooooo");
-			return false;
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
+		return false;
 	}
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.main, menu);
 		return true;
+	}
+	class MakeConnectionTask extends AsyncTask<Void, Void, Void>{
+
+	    @Override
+	    protected Void doInBackground(Void... params) {
+	        // TODO Auto-generated method stub
+	    	Connect();
+	    	try {
+				salida = new ObjectOutputStream(cliente.getOutputStream());
+				System.out.println("si hay salida");
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+	        return null;
+	    }
+
 	}
 
 }

@@ -1,7 +1,9 @@
 package com.mysocketsapp;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OptionalDataException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -24,6 +26,7 @@ public class MainActivity extends Activity {
 	Socket cliente;
 	int state =  0;
 	ObjectOutputStream salida;
+	ObjectInputStream entrada;
 	//final TextView mensaje = (TextView) findViewById(R.id.messageText);
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -105,12 +108,29 @@ public class MainActivity extends Activity {
 	    	Connect();
 	    	try {
 				salida = new ObjectOutputStream(cliente.getOutputStream());
-				System.out.println("si hay salida");
+				entrada = new ObjectInputStream(cliente.getInputStream());
+				System.out.println("si hay salida y salida");
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-	        return null;
+	    	while(true){
+	    		String mensaje2;
+				try {
+					mensaje2 = (String) entrada.readObject();
+					System.out.println("Servidor: " + mensaje2);
+				} catch (OptionalDataException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (ClassNotFoundException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+                
+	    	}
 	    }
 
 	}
